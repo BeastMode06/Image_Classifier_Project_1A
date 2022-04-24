@@ -368,13 +368,13 @@ model.to(device) # to GPU
 # In[27]:
 
 
-epochs = 12
+epochs = 1
 steps = 0
 running_loss = 0
 print_every = 10
 
 for epoch in range(epochs):
-    for inputs, labels in trainloader:  
+    for inputs, labels in trainloader:
         steps += 1
         inputs, labels = inputs.to(device), labels.to(device)
         
@@ -392,7 +392,7 @@ for epoch in range(epochs):
             accuracy = 0
             model.eval()
             with torch.no_grad():
-                for inputs, labels in validloader:  
+                for inputs, labels in validloader:
                     inputs, labels = inputs.to(device), labels.to(device)
                     logps = model.forward(inputs)
                     batch_loss = criterion(logps, labels)
@@ -405,12 +405,13 @@ for epoch in range(epochs):
                     accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
                     
             print(f"Epoch {epoch+1}/{epochs}.. "
-                 f"Train loss: {running_loss/len(dataloaders['train']):.3f}.. "
-                 f"Validation loss: {valid_loss/len(dataloaders['valid']):.3f}.. "
-                 f"Validation accuracy: {accuracy/len(dataloaders['valid']):.3f}.. "
+                 f"Train loss: {running_loss/len(['trainloader']):.3f}.. "
+                 f"Validation loss: {valid_loss/len(['validloader']):.3f}.. "
+                 f"Validation accuracy: {accuracy/len(['validloader']):.3f}.. "
                  )
             running_loss = 0
             model.train()
+
 
 
 # In[ ]:
@@ -465,6 +466,27 @@ for epoch in range(epochs):
 
 
 # TODO: Do validation on the test set
+test_loss = 0
+accuracy = 0
+model.eval()
+with torch.no_grad():
+    for inputs, labels in testloader:
+        inputs, labels = inputs.to(device), labels.to(device)
+        logps = model.forward(inputs)
+        batch_loss = criterion(logps, labels)
+                    
+        test_loss += batch_loss.item()
+                    
+        # Calculate accuracy
+        ps = torch.exp(logps)
+        top_p, top_class = ps.topk(1, dim=1)
+        equals = top_class == labels.view(*top_class.shape)
+        accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
+                    
+print(f"Test Loss: {test_loss/len(['testloader']):.3f}.. "
+    f"Test Accuracy: {accuracy/len(['testloader']):.3f}.. ")
+running_loss = 0
+model.train();
 
 
 # ## Save the checkpoint
@@ -480,6 +502,17 @@ for epoch in range(epochs):
 
 # TODO: Save the checkpoint 
 model.class_to_idx = train_data.class_to_idx
+checkpoint = {'classifier': model.classifier,
+              'epochs': epochs,
+              'model': models.vgg19(pretrained=True),
+              'optimizer': optimizer.state_dict(),
+              'state_dict': model.state_dict(),
+              'class_to_idx': model.class_to_idx
+             }
+   
+torch.save(checkpoint, 'checkpoint.pth')
+
+
 
 
 # ## Loading the checkpoint
@@ -490,6 +523,23 @@ model.class_to_idx = train_data.class_to_idx
 
 
 # TODO: Write a function that loads a checkpoint and rebuilds the model
+def loading_checkpoint(file_path):
+    checkpoint = torch.load('file.pth') 
+    classifier = checkpoint['classifier']
+    epochs = checkpoint['epochs']
+    model = checkpoint['model')]
+    optimizer = checkpoint['optimizer']
+    state_dict = checkpoint['state_dict']
+    class _to_idx = checkpoint['class_to_idx']
+    
+    #model,_,_ = (classifier, epochs, ,model, optimizer) 
+    model.class_to_idx = checkpoint('class_to_idx') 
+    model.load_state_dict(checkpoint('state_dict'))
+    
+    return model
+
+load_checkpoint = loading_checkpoint('checkpoint.pth')
+print(load_checkpoint)
 
 
 # # Inference for classification
