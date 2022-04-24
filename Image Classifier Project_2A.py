@@ -308,7 +308,9 @@ import torch.nn.functional as F
 
 # In[ ]:
 
-
+m = nn.MaxPool2d((3, 2), stride=(2, 1))
+input = torch.randn(20, 16, 50, 32)
+output = m(input)
 
 
 
